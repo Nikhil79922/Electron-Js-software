@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self';"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- <title>Electron Template</title> -->
+  <style>
+    /* ---------- Design Tokens ---------- */
+    :root {
+      --bg: #0b0c10;
+      --panel: #111218;
+      --panel-2: #171923;
+      --border: #222533;
+      --text: #e7e9ee;
+      --muted: #aeb3c2;
+      --accent: #5b8cff;
+      --accent-2: #7bffca;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f7fb;
+        --panel: #ffffff;
+        --panel-2: #f5f7ff;
+        --border: #e6e8f0;
+        --text: #121420;
+        --muted: #475069;
+        --accent: #335cff;
+        --accent-2: #0dbb90;
+        --shadow: 0 10px 25px rgba(14, 30, 100, 0.08);
+      }
+    }
+
+    /* ---------- Base ---------- */
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0;
+    }
+    * { box-sizing: border-box; }
+
+    /* ---------- Layout ---------- */
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 48px 1fr;
+      grid-template-areas:
+        "sidebar topbar"
+        "sidebar content";
+      height: 100%;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; letter-spacing: 0.2px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--panel-2), transparent);
+      border: 1px solid var(--border);
+    }
+    .brand svg { width: 18px; height: 18px; }
+    .nav { display: grid; gap: 6px; }
+    .nav a {
+      text-decoration: none; color: var(--text);
+      padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 12px; background: var(--panel-2);
+      display: flex; align-items: center; gap: 10px;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+    }
+    .nav a:hover { transform: translateY(-1px); border-color: #2b2e3f; }
+    .nav a.active { outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent); }
+
+    /* Topbar (drag region for frameless windows) */
+    .topbar {
+      grid-area: topbar;
+      display: flex; align-items: center; gap: 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 10px;
+      -webkit-app-region: drag;
+    }
+    .win-controls { margin-left: auto; display: flex; gap: 8px; -webkit-app-region: no-drag; }
+    .icon-btn {
+      width: 32px; height: 28px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--panel-2);
+      display: grid; place-items: center; cursor: pointer;
+      transition: background .2s ease, transform .06s ease;
+    }
+    .icon-btn:hover { transform: translateY(-1px); }
+    .icon-btn svg { width: 14px; height: 14px; }
+
+    /* Content */
+    .content {
+      grid-area: content;
+      padding: 16px;
+      overflow: auto;
+    }
+    .toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .search {
+      flex: 1 1 260px;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 8px 10px;
+    }
+    .search input {
+      background: transparent; border: 0; outline: none;
+      color: var(--text); width: 100%;
+    }
+    .btn {
+      -webkit-app-region: no-drag;
+      padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--accent); color: white; font-weight: 600; letter-spacing: .2px;
+      box-shadow: var(--shadow); cursor: pointer;
+      transition: transform .06s ease, filter .2s ease;
+    }
+    .btn.secondary { background: var(--panel-2); color: var(--text); }
+    .btn.ghost { background: transparent; }
+    .btn:active { transform: translateY(1px); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+    .card {
+      grid-column: span 4;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 10px;
+      min-height: 120px;
+    }
+    .card h3 { margin: 0; font-size: 15px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .kpi { font-size: 28px; font-weight: 800; letter-spacing: .2px; }
+
+    @media (max-width: 1200px) { .card { grid-column: span 6; } }
+    @media (max-width: 700px)  { .app { grid-template-columns: 1fr; grid-template-areas: "topbar" "content"; }
+                                 .sidebar { display: none; }
+                                 .card { grid-column: span 12; } }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+      width: min(560px, 100%); background: var(--panel); color: var(--text);
+      border: 1px solid var(--border); border-radius: 16px; padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .modal header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .modal footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; right: 16px; bottom: 16px;
+      background: var(--panel); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 12px; border-radius: 12px;
+      box-shadow: var(--shadow); display: none;
+    }
+
+    /* Utility */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 999px; padding: 6px 10px; font-weight: 600;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, color-mix(in oklab, var(--accent) 18%, transparent), transparent);
+    }
+    .ok { color: var(--success); }
+    .no { color: var(--danger); }
+    .spacer { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12L12 4l8 8-8 8-8-8Z" stroke="currentColor" stroke-width="2"/></svg>
+        <span>My Electron</span>
+      </div>
+      <nav class="nav">
+        <a class="active" href="#" data-route="dashboard">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h7V3H3v9Zm0 9h7v-7H3v7Zm11 0h7V12h-7v9Zm0-18v7h7V3h-7Z" stroke="currentColor" stroke-width="2"/></svg>
+          Dashboard
+        </a>
+        <a href="#" data-route="library">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 19h16M5 17V5a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2"/></svg>
+          Library
+        </a>
+        <a href="#" data-route="settings">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.94-3a7.94 7.94 0 0 0-.13-1.5l2.16-1.69-2-3.46-2.57 1a8.06 8.06 0 0 0-2.6-1.5l-.39-2.76H9.59l-.39 2.76a8.06 8.06 0 0 0-2.6 1.5l-2.57-1-2 3.46L4.2 10.5c-.08.49-.12.99-.12 1.5s.04 1.01.12 1.5l-2.16 1.69 2 3.46 2.57-1a8.06 8.06 0 0 0 2.6 1.5l.39 2.76h4.82l.39-2.76c.94-.34 1.82-.83 2.6-1.5l2.57 1 2-3.46-2.16-1.69c.09-.49.13-.99.13-1.5Z" stroke="currentColor" stroke-width="2"/></svg>
+          Settings
+        </a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 1v22M1 12h22" stroke="currentColor" stroke-width="2"/></svg>
+        v1.0.0
+      </div>
+    </aside>
+
+    <!-- Topbar (drag) -->
+    <header class="topbar">
+      <div class="badge">Electron Window</div>
+      <div class="spacer"></div>
+      <div class="win-controls">
+        <!-- These call into preload (window.api) if you wire it up -->
+        <button class="icon-btn" title="Minimize" id="btn-min">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button class="icon-btn" title="Maximize/Restore" id="btn-max">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6h12v12H6z" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button class="icon-btn" title="Close" id="btn-close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="toolbar">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/></svg>
+          <input id="search" placeholder="Search…" />
+        </div>
+        <a href="child.html" target="_blank">
+        <button class="btn" id="open-modal">New Item</button>
+        </a>
+        <button class="btn secondary" id="show-toast">Show Toast</button>
+        <button class="btn ghost" id="toggle-theme">Toggle Theme</button>
+      </div>
+
+      <section class="grid" id="cards">
+        <!-- Example cards -->
+        <article class="card">
+          <h3>Active Sessions</h3>
+          <div class="kpi">128</div>
+          <div class="muted">Today • <span class="ok">+12%</span></div>
+        </article>
+        <article class="card">
+          <h3>Build Status</h3>
+          <div class="kpi">Passing</div>
+          <div class="muted">CI • <span class="ok">OK</span></div>
+        </article>
+        <article class="card">
+          <h3>Errors</h3>
+          <div class="kpi no">7</div>
+          <div class="muted">Last hour</div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <header>
+        <h3 style="margin:0">Create Item</h3>
+        <button class="icon-btn" id="close-modal" aria-label="Close modal">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </header>
+      <div style="display:grid; gap:10px; margin-top:10px;">
+        <label>
+          <div class="muted">Title</div>
+          <input id="title" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--panel-2); color:var(--text);" />
+        </label>
+        <label>
+          <div class="muted">Description</div>
+          <textarea id="desc" rows="3" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--panel-2); color:var(--text);"></textarea>
+        </label>
+      </div>
+      <footer>
+        <button class="btn secondary" id="cancel-modal">Cancel</button>
+        <button class="btn" id="save-item">Save</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Saved successfully!</div>
+
+  <script>
+    // -------- Minimal JS (works without Node integration) --------
+    console.log("Render Process")
+    const $ = (s, p=document) => p.querySelector(s);
+
+    // Sidebar routing demo
+    document.querySelectorAll('.nav a').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+        // Swap cards content as a demo
+        const route = a.dataset.route;
+        const cards = $('#cards');
+        if (route === 'dashboard') cards.innerHTML = sampleCards();
+        if (route === 'library')   cards.innerHTML = sampleCards('Library Items', '24', 'Updated');
+        if (route === 'settings')  cards.innerHTML = settingsCards();
+      });
+    });
+
+    // Modal
+    const backdrop = $('#modal-backdrop');
+    const openModal = () => { backdrop.style.display = 'flex'; backdrop.setAttribute('aria-hidden','false'); };
+    const closeModal = () => { backdrop.style.display = 'none'; backdrop.setAttribute('aria-hidden','true'); };
+    $('#open-modal').addEventListener('click', openModal);
+    $('#close-modal').addEventListener('click', closeModal);
+    $('#cancel-modal').addEventListener('click', closeModal);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+    // Toast
+    const toast = $('#toast');
+    $('#show-toast').addEventListener('click', () => showToast('Hello from Electron!'));
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.style.display = 'none', 1800);
+    }
+
+    // Theme toggle (light/dark)
+    const toggleThemeBtn = $('#toggle-theme');
+    let forcedLight = false;
+    toggleThemeBtn.addEventListener('click', () => {
+      forcedLight = !forcedLight;
+      document.documentElement.style.colorScheme = forcedLight ? 'light' : 'dark';
+      showToast(`Theme: ${forcedLight ? 'Light' : 'Dark'}`);
+    });
+
+    // Save item demo
+    $('#save-item').addEventListener('click', () => {
+      const title = $('#title').value.trim();
+      if (!title) return showToast('Please enter a title');
+      showToast('Saved!');
+      closeModal();
+      // OPTIONAL: Call into Electron via preload if available
+      if (window.api?.saveItem) window.api.saveItem({ title, desc: $('#desc').value });
+    });
+
+    // Window controls (optional via preload)
+    $('#btn-min').addEventListener('click', () => window.api?.win?.minimize?.());
+    $('#btn-max').addEventListener('click', () => window.api?.win?.toggleMaximize?.());
+    $('#btn-close').addEventListener('click', () => window.api?.win?.close?.());
+
+    // Helpers to populate cards
+    function sampleCards(label1='Active Sessions', kpi1='128', sub1='Today') {
+      return `
+        <article class="card"><h3>${label1}</h3><div class="kpi">` + kpi1 + `</div><div class="muted">${sub1} • <span class="ok">+12%</span></div></article>
+        <article class="card"><h3>Build Status</h3><div class="kpi">Passing</div><div class="muted">CI • <span class="ok">OK</span></div></article>
+        <article class="card"><h3>Errors</h3><div class="kpi no">7</div><div class="muted">Last hour</div></article>
+      `;
+    }
+    function settingsCards() {
+      return `
+        <article class="card">
+          <h3>App Settings</h3>
+          <div class="muted">This is a placeholder panel. Wire your settings here.</div>
+          <button class="btn secondary" style="width:max-content;margin-top:8px" onclick="showToast('Settings saved')">Save Settings</button>
+        </article>
+        <article class="card">
+          <h3>About</h3>
+          <div class="muted">Electron + Vanilla Template. Safe by default (CSP, no Node in renderer).</div>
+        </article>
+        <article class="card">
+          <h3>Status</h3>
+          <div class="kpi ok">OK</div>
+          <div class="muted">All systems nominal</div>
+        </article>
+      `;
+    }
+  </script>
+</body>
+</html>
